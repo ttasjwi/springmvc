@@ -114,3 +114,126 @@ log.trace("trace log={}",name);
 
 ---
 
+## 요청 매핑
+- Http 요청의 URL(URI, PathVariable), 파라미터, 메서드, 여러가지 헤더를 지정하여 매핑되는 요청을 제한 가능
+
+<details>
+<summary>세부적인 사용법(접기/펼치기)</summary>
+<div markdown="1">
+
+### @RestController
+```java
+@RestController
+public class MappingController {
+```
+- `@RestController` : 클래스 앞에 선언. 모든 메서드의 반환 값에 대하여 반환 값으로 뷰를 찾지 않고, 반환객체를 HTTP 바디에 바로 입력
+
+### @RequestMapping
+```java
+@RequestMapping(value="/mapping-get-v1", method = RequestMethod.GET)
+public String mappingGetV1() {
+    log.info("mappingGetV1");
+    return "ok";
+}
+```
+```java
+@GetMapping(value="/mapping-get-v2")
+public String mappingGetV2() {
+    log.info("mappingGetV2");
+    return "ok";
+}
+```
+- value(디폴트) : url URL 호출이 오면 이 메서드가 실행되도록 함
+  - 배열로 지정시 다중 설정 가능(예: `{"/hello-basic", "/hello-go"}`)
+- method(메서드) : HTTP 메서드. 축약된 어노테이션이 따로 존재하는데, 현업에선 이들을 주로 사용
+  - GET -> `@GetMapping`
+  - POST -> `@PostMapping`
+  - PUT -> `@PutMapping`
+  - PATCH -> `@PatchMapping`
+  - DELETE -> `@DeleteMapping`
+
+
+### @RequestMapping - PathVariable
+```java
+@GetMapping("/mapping/{userId}")
+public String mappingPath(@PathVariable String userId) {
+    log.info("mappingPath userId={}", userId);
+    return "ok";
+}
+```
+```java
+@GetMapping("/mapping/users/{userId}/orders/{orderId}")
+public String mappingPath(@PathVariable String userId, @PathVariable Long orderId) {
+    log.info("mappingPath userId={}, orderId={}", userId, orderId);
+    return "ok";
+}
+```
+- 파라미터 앞에, `@PathVariable("경로변수명")`을 지정하여 요청의 경로변수를 사용할 수 있음
+- 변수명이 같으면 ()를 생략해도 된다. 
+  - 예) @PathVariable("userId") String userId -> @PathVariable userId
+- 복수의 `pathVariable`도 사용 가능하다.
+
+### @RequestMapping - 특정 Parameter
+```java
+@GetMapping(value="/mapping-param", params="mode=debug")
+public String mappingParam() {
+    log.info("mappingParam");
+    return "ok";
+}
+```
+- 특정 파라미터가 있거나 없는 조건식을 추가할 수 있음. 잘 사용되진 않는다.
+  - "mode" - 모든 mode 파라미터에 대해
+  - "!mode" - mode가 아닌 파라미터
+  - "mode=debug" : mode가 debug일 때
+  - "mode!=debug" : mode가 debug가 아닐 때
+- 배열로 지정할 경우 `or`로 취급됨.
+  - `params = {"mode="debug","data="good"}`
+
+### @RequestMapping - 특정 Header
+```java
+@GetMapping(value="/mapping-header", headers="mode=debug")
+public String mappingHeader() {
+        log.info("mappingHeader");
+        return "ok";
+}
+```
+- 특정 헤더가 있거나 없는 조건식을 추가할 수 있음.
+  - "mode" - 모든 mode 파라미터에 대해
+  - "!mode" - mode가 아닌 파라미터
+  - "mode=debug" : mode가 debug일 때
+  - "mode!=debug" : mode가 debug가 아닐 때
+
+### @RequestMapping - Content-Type 기반 매핑
+```java
+@PostMapping(value = "/mapping-consume", consumes = MediaType.APPLICATION_JSON_VALUE)
+public String mappingConsumes() {
+    log.info("mappingConsumes");
+    return "ok";
+}
+```
+- consume : 소비하다 - 요청 Content-Type
+  - `consumes="application/json"` : json
+  - `consumes="!application/json"` : json이 아닌
+  - `consumes="application/*"` : application/*에 해당하는
+  - `consumes="*\/*"` : 모든
+  - `MediaType.APPLICATION_JSON_VALUE` : `"application/json"`을 상수화
+
+### @RequestMapping - Accept 헤더 기반
+```java
+@PostMapping(value = "/mapping-produce", produces = MediaType.TEXT_HTML_VALUE)
+public String mappingProduces() {
+    log.info("mappingProduces");
+    return "ok";
+}
+```
+- Accept : 클라이언트가 선호하는 미디어 타입
+  - `produces="text/html"`
+  - `produces="!text/html"`
+  - `produces="text/*"`
+  - `produces="*\/*"`
+  - `produces = MediaType.TEXT_HTML_VALUE`
+
+</div>
+</details>
+
+---
