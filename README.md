@@ -237,3 +237,51 @@ public String mappingProduces() {
 </details>
 
 ---
+
+## 요청 매핑 - 실제 API 예시
+
+<details>
+<summary>세부적인 사용법(접기/펼치기)</summary>
+<div markdown="1">
+
+```java
+@RestController
+@RequestMapping("/mapping/users")
+public class MappingClassController {
+
+    @GetMapping
+    public String users() {
+        return "get users";
+    }
+
+    @PostMapping
+    public String addUser() {
+        return "post user";
+    }
+
+    @GetMapping("/{userId}")
+    public String findUser(@PathVariable String userId) {
+        return "get userId="+ userId;
+    }
+
+    @PatchMapping("/{userId}")
+    public String updateUser(@PathVariable String userId) {
+        return "patch userId="+ userId;
+    }
+
+    @DeleteMapping("/{userId}")
+    public String deleteUser(@PathVariable String userId) {
+        return "delete userId="+ userId;
+    }
+}
+```
+![Postman_RequestMapping.png](img/Postman_RequestMapping.png)
+
+- 클래스 레벨에서 `@RequestMapping(상위 path)`을 두고, 메서드 레벨에서 `@RequestMapping(하위 path)`를 지정하여 중복되는 경로부분을 생략할 수 있다.
+- 실제 `Postman`으로 테스트를 해보면 반환된 문자열이 httpResponse Body에 그대로 담김
+
+</div>
+</details>
+
+
+---
