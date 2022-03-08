@@ -460,3 +460,46 @@ public String requestParamMap(@RequestParam Map<String, Object> paramMap) {
 </details>
 
 ---
+
+## Http 요청 - @ModelAttribute
+- 바인딩을 할 객체를 지정하고 앞에 `@ModelAttribute` 어노테이션을 달면 자동으로 요청 파라미터를 주입할 수 있음
+  - 제약사항 : 바인딩을 하기 위해서 setter 필요
+
+<details>
+<summary>세부적인 사용법(접기/펼치기)</summary>
+<div markdown="1">
+
+### V1 : @ModelAttribute를 통한 파라미터 바인딩  
+```java
+@RequestMapping("/model-attribute-v1")
+@ResponseBody
+public String modelAttributeV1(@ModelAttribute HelloData helloData) {
+    log.info("username={}, age={}", helloData.getUsername(), helloData.getAge());
+    //log.info("HelloData={}", helloData);
+    return "ok";
+}
+```
+`@ModelAttribute`를 통해 파라미터를 통해 넘어온 값을 객체에 바로 바인딩 가능
+  - 객체 생성
+  - 객체에 요청 파라미터의 이름으로 프로퍼티를 찾아서, setter를 호출 후 바인딩
+  - 타입이 맞지 않는 값이 넘어올 경우 BindException 발생
+
+### V2 : @ModelAttribute 생략
+```java
+@RequestMapping("/model-attribute-v2")
+@ResponseBody
+public String modelAttributeV2(HelloData helloData) {
+    log.info("username={}, age={}", helloData.getUsername(), helloData.getAge());
+    //log.info("HelloData={}", helloData);
+    return "ok";
+}
+```
+- `@ModelAttribute`를 생략할 수 있다. 그런데, `@RequestParam`도 생략 가능해서 혼란을 야기함
+- 스프링에서는 `@RequestParam`, `@ModelAttribute` 어노테이션 생략 시 다음 규칙을 적용함
+  - 기본형 : `@RequestParam`
+  - 객체 : `@ModelAttribute` (단, argument resolver로 지정해둔 타입은 적용되지 않는다.)
+
+</div>
+</details>
+
+---
