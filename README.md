@@ -324,3 +324,139 @@ public String headers(HttpServletRequest request,
 </details>
 
 ---
+
+## Http 요청 시 값을 전달하는 방법
+
+Http 요청 시, 서버에 데이터를 전송하는 방식은 크게 다음 세가지 방식이 존재함
+
+- GET 방식 쿼리 파라미터
+- HTML Form (POST방식으로 메시지 바디에 데이터를 넣어서 전송)
+  - content-type : `application/x-www-form/urlencoded`
+- Http Message Body에 직접 데이터를 담아서 전송
+  - Http API에서 주로 사용하는 방식이고, 최근 제일 주류로 사용되는 것은 JSON
+  - POST, PUT, PATCH
+
+---
+
+## Http 요청 - 요청 파라미터 조회
+
+1. 요청 파라미터 조회
+   - GET 방식, POST HTML Form 전송 방식 모두 구조적으로 동일한 방식으로 요청 파라미터를 조회할 수 있음.
+   - 이 두가지 방식으로 넘어온 파라미터를 조회하는 방법을 통틀어 '요청 파라미터 조회'라고 한다.
+
+
+2. 파라미터 조회 방법
+   - Servlet : `HttpServletRequest` -> `request.getParameter(...)`
+   - Spring : `@RequestParam`을 통해 파라미터들을 변수에 바인딩할 수 있음
+
+<details>
+<summary>세부적인 사용법(접기/펼치기)</summary>
+<div markdown="1">
+
+### V1 : HttpServletRequest을 통한 요청 파라미터 조회
+```java
+    @RequestMapping("/request-param-v1")
+    public void requestParamV1(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        String username = request.getParameter("username");
+        int age = Integer.parseInt(request.getParameter("age"));
+        log.info("username={}, age={}", username, age);
+
+        response.getWriter().write("ok");
+    }
+```
+- `request.getParmeter(...)`을 통해 값 받아오기
+
+### V2 : @RequestParam 어노테이션
+```java
+    @RequestMapping("/request-param-v2")
+    @ResponseBody
+    public String requestParamV2(
+            @RequestParam("username") String memberName,
+            @RequestParam("age") int memberAge) {
+        log.info("username={}, age={}", memberName, memberAge);
+        return "ok";
+    }
+```
+- `@RequestParam("파라미터명") 변수타입 변수명`
+  - 파라미터 이름을 통해 변수에 바로 대입
+
+### V3 : 파라미터명과 변수명이 같으면 @RequestParam(...)의 속성 생략 가능
+```java
+    @RequestMapping("/request-param-v3")
+    @ResponseBody
+    public String requestParamV3(
+            @RequestParam String username,
+            @RequestParam int age) {
+        log.info("username={}, age={}", username, age);
+        return "ok";
+    }
+```
+- `@RequestParam("파라미터명") 변수타입 변수명`에서 파라미터명과 변수명이 같을 경우
+- `@RequestParam(name="xxx")`에서 속성 생략 가능
+
+### V4 : @RequestParam 생략
+```java
+    @RequestMapping("/request-param-v4")
+    @ResponseBody
+    public String requestParamV4(String username, int age) {
+        log.info("username={}, age={}", username, age);
+        return "ok";
+    }
+```
+- 위의 단계에서 심지어 `@RequestParam`을 생략 가능
+- 하지만 여기까지 오면 매우 생략이 과한 면이 있어서 의미를 명확히 하는 차원에서는 V3 정도가 적당하다는 김영한님의 의견이 있음.
+
+### 파라미터 필수 여부 : @RequestParam(required=...)
+```java
+    @RequestMapping("/request-param-required")
+    @ResponseBody
+    public String requestParamRequired(
+            @RequestParam(required = true) String username,
+            @RequestParam(required = false) Integer age) {
+        // int age <- null이 들어갈 수 없음
+
+        log.info("username={}, age={}", username, age);
+        return "ok";
+    }
+```
+- required 지정을 통해, 값의 필수 여부를 설정할 수 있음
+  - true : 값이 필수로 존재해야함
+  - false : 값이 없어도 됨.
+- 하지만, `required=false`일때 변수가 기본형인 경우 모순이 발생함.
+  - 기본형은 null 값을 가질 수 없음
+  - null을 가질 수 있는 래퍼클래스로 변수타입을 변경하거나, defaultValue를 지정
+  - 또한, 요청이 올 때 `request=`의 형식으로 데이터가 전송되면 빈 문자열 `""`이 넘어오는 문제가 있음.
+
+### 파라미터 기본값 지정 : @RequestParam(defaultValue=...)
+```java
+@RequestMapping("/request-param-default")
+@ResponseBody
+public String requestParamDefault(
+        @RequestParam(defaultValue = "guest") String username,
+        @RequestParam(defaultValue = "-1") int age) {
+    log.info("username={}, age={}", username, age);
+    return "ok";
+}
+```
+- defaultValue를 지정하여 파라미터에 값이 전달되지 않을 때에 대해서도 기본값을 적용할 수 있음.
+- 빈 문자열이 온 경우에 대해서도 기본값이 적용됨
+- defaultValue를 지정하면 required 속성이 의미가 없음
+  - 값이 없더라도 기본값이 지정되므로 결국 무조건 값이 존재하게 됨
+
+## 요청 파라미터를 Map으로 조회하기
+```java
+@RequestMapping("/request-param-map")
+@ResponseBody
+public String requestParamMap(@RequestParam Map<String, Object> paramMap) {
+    log.info("username={}, age={}", paramMap.get("username"), paramMap.get("age"));
+    return "ok";
+}
+```
+- 파라미터를 Map으로 받아서 조회할 수 있음.
+- 동일 파라미터에 대해, 여러개의 값이 존재할 경우 `MultiValueMap`을 사용
+  - 이 경우 get("파라미터명")을 통해 값을 꺼낼 경우 배열로 꺼낼 수 있음
+
+</div>
+</details>
+
+---
