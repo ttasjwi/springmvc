@@ -503,3 +503,75 @@ public String modelAttributeV2(HelloData helloData) {
 </details>
 
 ---
+
+## Http 요청 - MessageBody에 단순 텍스트가 담겼을 때
+- MessageBody에 단순 텍스트가 넘어왔을 경우는 앞에서 다룬 파라미터 조회 방식으로는 값을 꺼내올 수 없다.
+- `@RequestBody`를 통해 요청의 messageBody 텍스트를 파라미터로 바인딩하자.
+
+<details>
+<summary>세부적인 사용법(접기/펼치기)</summary>
+<div markdown="1">
+
+### V1 : 서블릿
+```java
+@PostMapping("/request-body-string-v1")
+public void requestBodyString(HttpServletRequest request, HttpServletResponse response) throws IOException {
+        ServletInputStream inputStream = request.getInputStream();
+        String messageBody = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
+
+        log.info("messageBody={}", messageBody);
+        response.getWriter().write("ok");
+        }
+```
+- request로부터 inputStream을 받아옴.
+- `StreamUtils.copyToString(inputStream, 인코딩)`을 통해 messageBody를 얻어냄
+- 응답 시 문자를 응답 messageBody에 담고싶을 경우 response.getWriter를 통해 writer를 얻어낸뒤 write를 통해 메시지 바디에 값을 담아 전송
+
+### V2 : inputStream, writer를 파라미터에 넣기
+```java
+@PostMapping("/request-body-string-v2")
+public void requestBodyStringV2(InputStream inputStream, Writer responseWriter) throws IOException {
+    String messageBody = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
+
+    log.info("messageBody={}", messageBody);
+    responseWriter.write("ok");
+}
+```
+- `HttpServletRequest`로부터 inputStream을 가져오는 과정을 생략
+- `HttpServletResponse`로부터 writer를 가져오는 과정을 생략
+
+### V3 : HttpEntity 사용
+```java
+@PostMapping("/request-body-string-v3")
+public HttpEntity<String> requestBodyStringV3(HttpEntity<String> httpEntity) throws IOException {
+    String messageBody = httpEntity.getBody();
+    log.info("messageBody={}", messageBody);
+
+    return new HttpEntity<>("ok");
+}
+```
+- `HttpEntity<String>` : HttpHeader, body 정보를 편리하게 조회, 설정할 수 있음.
+  - `getBody()` : 메시지 바디 정보를 직접 조회
+  - 반환으로 넘길 경우, 응답 메시지 바디에 문자열을 바로 넘김
+- `HttpEntity<String>`을 상속받은 RequestEntity, ResponseEntity를 사용하면 더 추가적인 기능을 사용할 수 있음.
+  - RequestEntity : HttpMethod, url 정보 추가
+  - ResponseEntity : Http상태 코드 설정 가능
+    - 예) `return new ResponseEntity<String>("hello", responseHeaders, HttpStatus.CREATED);`
+- 원리 : 스프링 MVC 내부에서 HTTP 메시지 바디를 읽고, 문자나 객체로 변환해주는 '메시지 컨버터' 기능을 사용하기 때문.
+
+### V4 : @RequestBody, @ResponseBody 어노테이션 사용
+```java
+@ResponseBody
+@PostMapping("/request-body-string-v4")
+public String requestBodyStringV4(@RequestBody String messageBody) throws IOException {
+    log.info("messageBody={}", messageBody);
+    return "ok";
+}
+```
+- `@RequestBody` : HttpRequest의 MessageBody를 바인딩
+- `@ResponseBody` : HttpResponse의 MessageBody에 문자열을 그대로 반환
+
+</div>
+</details>
+
+---
