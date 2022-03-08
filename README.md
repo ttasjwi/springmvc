@@ -283,5 +283,44 @@ public class MappingClassController {
 </div>
 </details>
 
+---
+
+## Http 요청 - 기본, 헤더
+
+- 어노테이션 기반 Spring Controller는 다양한 파라미터를 지원함
+- 스프링 `@Controller`에서 사용가능한 파라미터 목록 : <a href="https://docs.spring.io/spring-framework/docs/current/reference/html/web.html#mvc-ann-arguments" target="_blank">Method Arguments</a>
+- 스프링 `@Controller`에서 사용가능한 응답값 목록 : <a href="https://docs.spring.io/spring-framework/docs/current/reference/html/web.html#mvc-ann-return-types" target="_blank">Return Values</a>
+<details>
+<summary>예시(접기/펼치기)</summary>
+<div markdown="1">
+
+```java
+@RequestMapping("/headers")
+public String headers(HttpServletRequest request,
+                      HttpServletResponse response,
+                      HttpMethod httpMethod,
+                      Locale locale,
+                      @RequestHeader MultiValueMap<String, String> headerMap,
+                      @RequestHeader("host") String host,
+                      @CookieValue(value="myCookie", required = false) String cookie){
+```
+- `HttpServletRequest`, `HttpServletResponse`
+- `HttpMethod`
+- `Locale`
+- `@RequestHeader MultiValueMap<String,String>` : 모든 HttpRequest 헤더
+  - MultiValueMap : 한 key에 여러 value를 받을 수 있음. 꺼낼 때 get 메서드 호출 시, 배열로 받아짐.
+- `@RequestHeader("key") String value` : 특정 헤더 조회
+  - value : 조회 헤더
+  - required : 필수값 여부(true이면 필수, false이면 필수 아님)
+  - defaultValue : 기본값 지정
+
+- `@CookieValue("key") String value` : 특정 쿠키 조회
+  - value : 조회 쿠키
+  - required : 필수값 여부(true이면 필수, false이면 필수 아님)
+  - defaultValue : 기본값 지정
+
+
+</div>
+</details>
 
 ---
