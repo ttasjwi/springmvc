@@ -746,3 +746,89 @@ public void responseViewV3(Model model) {
 </details>
 
 ---
+
+## Http 응답 - HTTP API, 메시지 바디에 직접 입력
+
+1. 객체, 문자열을 메시지 바디에 직접 입력
+   - `@ResponseBody` : 문자열, JSON 반환
+   - `@RestController` : 클래스의 모든 메서드에 `@ResponseBody`를 붙인 것과 구조적 동일
+
+2. 상태코드 등의 부가적인 정보 추가
+   - `@ResponseStatus(...)` : 응답코드 설정
+   - 동적으로 상태코드를 변경하고 싶을 때는 코드 내부 로직으로 `ResponseEntity`에 동적으로 상태코드 지정하여 반환
+
+<details>
+<summary>문자열 반환(접기, 펼치기)</summary>
+<div markdown="1">
+
+### 문자열 V1 : 서블릿
+```java
+    @GetMapping("/response-body-string-v1")
+    public void responseBodyV1(HttpServletResponse response) throws IOException {
+        response.getWriter().write("ok");
+    }
+```
+- response에서 getWriter를 통해 writer를 얻어오고 write를 통해 반환 문자열 입력
+
+### 문자열 V2 : HttpEntity, ResponseEntity
+```java
+    @GetMapping("/response-body-string-v2")
+    public ResponseEntity<String> responseBodyV2() {
+        return new ResponseEntity<>("ok", HttpStatus.OK);
+    }
+```
+- HttpEntity 또는 ResponseEntity에 문자열을 담아 반환
+  - ResponseEntity는 상태코드 등을 지정할 수 있다.
+
+### 문자열 V3 : @ResponseBody
+```java
+    //@ResponseBody
+    @GetMapping("/response-body-string-v3")
+    public String responseBodyV3() {
+        return "ok";
+    }
+```
+- `@ResponseBody` : 메시지 바디에 문자열을 그대로 반환
+- 클래스 레벨에서 `@RestController`를 지정하면 모든 메서드에 대해 `@ResponseBody`가 적용되고 해당 클래스는 컨트롤러로 스프링 컨테이너에 등록된다.
+
+</div>
+</details>
+
+<details>
+<summary>JSON으로 반환(접기, 펼치기)</summary>
+<div markdown="1">
+
+### JSON V1 : ResponseEntity
+```java
+    @GetMapping("/response-body-json-v1")
+    public ResponseEntity<HelloData> responseBodyJsonV1() {
+        HelloData helloData = new HelloData();
+        helloData.setUsername("ttasjwi");
+        helloData.setAge(20);
+
+        return new ResponseEntity<>(helloData, HttpStatus.OK);
+    }
+```
+- `ResponseEntity`에 객체, 상태코드를 함께 넣어 반환
+
+### JSON V2 : @ResponseBody, @ResponseParam
+```java
+    //@ResponseBody
+    @ResponseStatus(HttpStatus.OK)
+    @GetMapping("/response-body-json-v2")
+    public HelloData responseBodyJsonV2() {
+        HelloData helloData = new HelloData();
+        helloData.setUsername("ttasjwi");
+        helloData.setAge(20);
+
+        return helloData;
+    }
+```
+- `@ResponseBody` : 객체 -> Http 메시지 컨버터 -> JSON
+- `@ResponseStatus` : 상태코드 지정
+  - 동적으로 상태코드를 변경하고 싶을 경우 `ResponseEntity`에 조건에 따라 상태값을 지정하여 반환
+
+</div>
+</details>
+
+---
