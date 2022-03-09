@@ -663,3 +663,86 @@ public HelloData requestBodyJsonV5(@RequestBody HelloData helloData) {
 </details>
 
 ---
+
+## HTTP 응답 - 서버에서 응답데이터를 만드는 방법
+
+- 정적 리소스 : 웹 브라우저에 정적 HTML, css, 이미지, js
+- 뷰 템플릿 : 웹 브라우저에 동적 HTML 전달
+- HTTP 메시지
+  - HTTP API : HTML이 아닌, 데이터를 전달해야하므로 BODY에 JSON와 같은 데이터를 보냄
+
+---
+
+## HTTP 응답 - 정적 리소스, 뷰 템플릿
+
+### 정적 리소스
+
+- 클래스패스 : `src/main/resources/`
+- 클래스패스 아래의 다음 경로에 위치한 리소스는 정적 리소스로 인식
+  - `/static`, `/public`, `/resources` `/META-INF/resources`
+- 예) src/main/resources/static/basic/hello-form.html 접근
+  - 웹 브라우저에서 접근 : `localhost:8080/basic/hello-form.html`
+
+### 뷰 템플릿
+- 뷰템플릿은 동적으로 응답 View 생성
+- View는 응답을 만들고 전달
+  - HTML을 동적으로 생성하는 용도로 사용하긴 하는데, 다른 것들도 가능.
+- 스프링부트의 기본 뷰 템플릿 경로 : `src/main/resources/templates`
+
+### Thymeleaf
+
+- gradle에 의존성 추가 (스프링부트에서 지원)
+- 뷰 리졸버 필요(스프링부트에서 자동으로 ThymeleafViewResolver와 같은 필요 스프링 빈을 등록함)
+- 기본적인 viewname의 prefix, suffix 설정값도 스프링부트가 지원
+  ```properties
+  # application.properties
+  spring.thymeleaf.prefix=classpath:/templates/
+  spring.thymeleaf.suffix=.html
+  ```
+- 스프링 부트의 타임리프 관련 추가 설정 : <a href="https://docs.spring.io/spring-boot/docs/current/reference/html/application-properties.html#appendix.application-properties.templating" target="_blank">Spring Boot Doc</a> (페이지 안에서 thymeleaf 검색)
+
+<details>
+<summary>세부적인 사용법(접기/펼치기)</summary>
+<div markdown="1">
+
+### 뷰 템플릿 응답 V1 : ModelAndView 반환
+```java
+@RequestMapping("/response-view-v1")
+public ModelAndView responseViewV1() {
+    ModelAndView mav = new ModelAndView("response/hello")
+            .addObject("data", "hello");
+    
+    return mav;
+}
+```
+- `ModelAndView`에 viewName, 응답 데이터를 담아 반환
+
+### 뷰 템플릿 응답 V2 : String 반환
+```java
+@RequestMapping("/response-view-v2")
+public String responseViewV2(Model model) {
+    model.addAttribute("data", "hello");
+    return "response/hello";
+}
+```
+- Model에 응답 데이터를 담음
+- `@ResponseBody`가 없으면 viewName을 반환되어, 뷰 리졸버가 실행되고 뷰를 찾고, 렌더링됨
+- `@ResponseBody`가 있으면 HttpBody에 직접 반환 문자열이 입력됨.
+
+### 뷰 템플릿 응답 V3 : void 반환 (비추천)
+```java
+@RequestMapping("/response/hello") // 요청 경로와 응답 view가 같은 경로일 때(비 추천)
+public void responseViewV3(Model model) {
+    model.addAttribute("data", "hello");
+}
+```
+- `@Controller`를 사용하고,  `HttpServletResponse`, `OutputStream(Writer)`같은 메시지를 처리하는 파라미터가 없을 경우 요청 URL을 참조하여, viewName으로 사용
+  - 요청 : `/response/hello`
+  - viewPath : `/templates/response/hello.html`
+- 명시적으로 어떤 viewName을 반환하는지 확인하기 힘들고, 딱딱 요청URL과 viewPath가 맞는 경우도 드물기 때문에 사용하지 않는 것을 권장
+
+
+</div>
+</details>
+
+---
