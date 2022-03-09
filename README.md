@@ -575,3 +575,91 @@ public String requestBodyStringV4(@RequestBody String messageBody) throws IOExce
 </details>
 
 ---
+
+## Http 요청 - MessageBody에 JSON이 넘어왔을 때
+
+### JSON 요청
+Content-Type : `application/json`
+- `@RequestBody` : JSON 요청 -> HTTP 메시지 컨버터 -> 객체 바인딩
+- `@ResponseBody` : 객체 -> HTTP 메시지 컨버터 -> JSON 응답
+
+<details>
+<summary>세부적인 사용법(접기/펼치기)</summary>
+<div markdown="1">
+
+### V1 : 서블릿 
+```java
+private ObjectMapper objectMapper = new ObjectMapper();
+
+@PostMapping("/request-body-json-v1")
+public void requestBodyJsonV1(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    ServletInputStream inputStream = request.getInputStream();
+    String messageBody = StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
+
+    log.info("messageBody={}", messageBody);
+
+    HelloData helloData = objectMapper.readValue(messageBody, HelloData.class);
+    log.info("username={}, age={}", helloData.getUsername(), helloData.getAge());
+    response.getWriter().write("ok");
+}
+```
+- `HttpServletRequest` -> `inputStream` -> `messageBody` -> ObjectMapper -> 객체
+- Body의 JSON 문자 데이터를 가져오고, 이를 ObjectMapper를 객체로 바인딩한다.
+
+### V2 : @RequestBody로 문자열에 바인딩
+```java
+@PostMapping("/request-body-json-v2")
+@ResponseBody
+public String requestBodyJsonV2(@RequestBody String messageBody) throws IOException {
+    log.info("messageBody={}", messageBody);
+    HelloData helloData = objectMapper.readValue(messageBody, HelloData.class);
+    log.info("username={}, age={}", helloData.getUsername(), helloData.getAge());
+    return "ok";
+}
+```
+- 앞에서 학습한 `@RequestBody`를 통해 문자열에 바인딩
+- `HttpServletRequest -> inputStream -> 메시지바디` 의 과정을 생략함
+
+### V3 : @RequestBody로 바로 객체에 바인딩
+```java
+@PostMapping("/request-body-json-v3")
+@ResponseBody
+public String requestBodyJsonV3(@RequestBody HelloData helloData) {
+    log.info("username={}, age={}", helloData.getUsername(), helloData.getAge());
+    return "ok";
+}
+```
+- `@RequestBody`로 JSON 요청(`Content-Type : application/json`)을 바로 객체에 바인딩할 수 있다.
+  - 이 과정에서 **Http 메시지 컨버터**가 개입하여 앞에서의 과정들을 대신 수행해준다.
+- 이때 `@ResponseBody`는 생략할 수 없다.
+  - 어노테이션 생략 시 : 기본형은 `@RequestParam`, 객체는 `@ModelAttribute`로 처리하기 때문
+
+### V4 : @RequestBody 대신 HttpEntity 사용
+```java
+@PostMapping("/request-body-json-v4")
+@ResponseBody
+public String requestBodyJsonV4(HttpEntity<HelloData> data) {
+    HelloData helloData = data.getBody();
+    log.info("username={}, age={}", helloData.getUsername(), helloData.getAge());
+    return "ok";
+}
+```
+- `@RequestBody` 대신 `HttpEntity<...>`을 사용해도 됨
+  - 이 때도 **Http 메시지 컨버터**가 개입하여 앞에서의 과정들을 대신 수행해준다.
+
+### V5 : @ResponseBody + 객체 반환
+```java
+@PostMapping("/request-body-json-v5")
+@ResponseBody
+public HelloData requestBodyJsonV5(@RequestBody HelloData helloData) {
+    log.info("username={}, age={}", helloData.getUsername(), helloData.getAge());
+    return helloData;
+}
+```
+- `@ResponseBody` 어노테이션을 달았을 때, 반환 객체를 Http메시지 컨버터가 개입하여 JSON 응답으로 변환하도록 해준다.
+  - 이때 클라이언트의 Accept에 대응한 메시지 컨버터가 개입함. (`application/json`, text, ... 각각에 맞게)
+
+</div>
+</details>
+
+---
