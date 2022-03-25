@@ -832,3 +832,11 @@ public void responseViewV3(Model model) {
 </details>
 
 ---
+
+## ModelAttribute의 부가적 기능
+
+- 파라미터에서 선언 : model에도 해당 객체를 변수명으로 addAttribute 함.
+- 메서드 앞에 선언 : 해당 컨트롤러의 각 model 객체에 해당 메서드의 반환값을 addAttribute 함
+
+---
+
