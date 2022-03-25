@@ -840,3 +840,19 @@ public void responseViewV3(Model model) {
 
 ---
 
+## RedirectAttribute - 리다이렉트 지원
+
+```java
+    @PostMapping("/add")
+    public String addItem(@ModelAttribute Item item, RedirectAttributes redirectAttributes) {
+        log.info("item.open() = {}",item.getOpen());
+        Item savedItem = itemRepository.save(item);
+        redirectAttributes.addAttribute("itemId", savedItem.getId());
+        redirectAttributes.addAttribute("status", true);
+        return "redirect:/form/items/{itemId}";
+    }
+```
+- 리다이렉트 경로에 pathVariable이 있고, redirectAttribute에 동명의 key가 있을 때 value로 접근할 수 있게 함
+- 리다이렉트 메서드에서 Model로 사용가능
+
+---
